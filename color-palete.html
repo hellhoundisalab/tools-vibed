@@ -20,23 +20,38 @@
             align-items: center;
         }
 
-        /* Console Log - Top Left */
+        /* Console Log Container - Top Left */
         #console-log {
             position: fixed;
             top: 30px;
             left: 30px;
-            font-size: 0.65rem;
-            color: rgba(0, 0, 0, 0.2); /* Very faint */
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
             pointer-events: none;
             z-index: 200;
-            opacity: 0;
-            transition: opacity 0.4s ease;
         }
 
-        #console-log.visible {
+        .console-item {
+            font-size: 0.65rem;
+            color: rgba(0, 0, 0, 0.2); 
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            white-space: nowrap;
+        }
+
+        .console-item.visible {
             opacity: 1;
+            transform: translateY(0);
+        }
+
+        .console-item.exit {
+            opacity: 0;
+            filter: blur(2px);
+            transform: translateX(-5px);
         }
 
         /* Control Wrapper */
@@ -86,6 +101,11 @@
             margin-left: 0;
         }
 
+        /* Locked State: Subtle lift, no z-index priority */
+        .keycard.is-locked {
+            transform: translateY(-15px) !important;
+        }
+
         /* The Card Face */
         .card-face {
             position: absolute;
@@ -98,7 +118,7 @@
             transition: background-color 0.4s ease;
         }
 
-        /* Black Connector Handle - Fixed Z-index */
+        /* Black Connector Handle */
         .connector {
             position: absolute;
             top: -25px;
@@ -114,21 +134,56 @@
             padding: 8px 15px 0 15px;
             clip-path: polygon(0% 20%, 15% 20%, 15% 0%, 85% 0%, 85% 20%, 100% 20%, 100% 100%, 0% 100%);
             z-index: 60;
+            transition: background 0.3s ease;
         }
 
         .gold-strip {
+            position: relative;
             width: 6px;
             height: 20px;
             background: linear-gradient(to bottom, #d4af37, #f1d592);
             border-radius: 1px;
             opacity: 0.8;
+            overflow: hidden;
+            transition: background 0.4s ease, box-shadow 0.4s ease;
         }
 
-        .keycard.is-active:not(.is-exiting):hover {
-            transform: translateY(-80px); 
+        /* Locked Contact State */
+        .keycard.is-locked .gold-strip {
+            background: #4ade80 !important;
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+            opacity: 1;
         }
 
-        /* Constrained Scratch Zone - Strictly over the Hex area only */
+        /* Running Glow Effect */
+        .gold-strip::after {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.9), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .keycard:hover .gold-strip::after {
+            opacity: 1;
+            animation: goldRun 1.2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes goldRun {
+            0% { top: -100%; }
+            100% { top: 100%; }
+        }
+
+        /* Hover Lift: Reduced for convenience */
+        .keycard.is-active:not(.is-exiting):not(.is-locked):hover {
+            transform: translateY(-6px); 
+        }
+
+        /* Constrained Scratch Zone */
         .hex-zone {
             position: absolute;
             top: 95px; 
@@ -193,7 +248,7 @@
         /* Industrial Buttons */
         .btn-industrial {
             position: relative;
-            width: 220px;
+            width: 140px; 
             height: 50px;
             border: 1px solid #e2e2e2;
             background: #ffffff;
@@ -203,10 +258,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.4em;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: 4px;
         }
 
         .btn-passer {
@@ -242,43 +295,61 @@
             border-color: #1a1a1a;
         }
 
+        .btn-industrial.secondary:hover:not(.loading) {
+            background: #262626;
+        }
+
         .btn-industrial.loading {
             cursor: wait;
             opacity: 0.6;
         }
 
         @media (max-width: 800px) {
-            #console-log { top: 20px; left: 20px; font-size: 0.55rem; }
-            .controls-wrapper { flex-direction: column; align-items: center; gap: 0.5rem; margin-top: -15vh; }
-            .btn-industrial { width: 180px; height: 44px; font-size: 0.6rem; }
+            #console-log { top: 20px; left: 20px; }
+            .controls-wrapper { gap: 0.5rem; margin-top: -15vh; }
+            .btn-industrial { width: 100px; height: 44px; }
             .keycard { width: 140px; height: 400px; margin-left: -80px; }
             .connector { width: 80px; height: 30px; top: -15px; }
             .gold-strip { width: 4px; height: 12px; }
             .palette-container { bottom: -280px; }
-            .keycard.is-active:not(.is-exiting):hover { transform: translateY(-60px); }
+            .keycard.is-active:not(.is-exiting):hover { transform: translateY(-4px); }
+            .keycard.is-locked { transform: translateY(-8px) !important; }
             .card-index { top: 25px; left: 20px; font-size: 1.1rem; }
             .hex-code { top: 140px; left: 20px; font-size: 0.8rem; }
             .hex-zone { top: 65px; left: 20px; width: 20px; height: 80px; }
         }
     </style>
 </head>
-<body>
+<body onclick="handleBackgroundClick(event)">
 
     <div id="console-log"></div>
 
     <div class="controls-wrapper">
         <button id="regenBtn" class="btn-industrial" onclick="handleRegenerate()">
-            <span class="relative z-10">Recalibrate</span>
+            <div class="relative z-10">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 2v6h-6"></path>
+                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                    <path d="M3 22v-6h6"></path>
+                    <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                </svg>
+            </div>
             <div class="btn-passer"></div>
         </button>
         <button id="saveBtn" class="btn-industrial secondary" onclick="savePaletteToClipboard()">
-            <span class="relative z-10">Export Array</span>
+            <div class="relative z-10">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+            </div>
             <div class="btn-passer"></div>
         </button>
     </div>
 
     <div class="palette-container" id="palette">
-        <!-- Keycards injected here -->
+        <!-- Keycards managed by state -->
     </div>
 
     <script>
@@ -286,7 +357,8 @@
         const regenBtn = document.getElementById('regenBtn');
         const saveBtn = document.getElementById('saveBtn');
         const consoleLog = document.getElementById('console-log');
-        let currentPalette = [];
+        
+        let cardData = []; // Array of { hex: string, locked: boolean }
         let consoleTimeout;
 
         function generateHex() {
@@ -308,12 +380,15 @@
         }
 
         function updateConsole(message) {
-            clearTimeout(consoleTimeout);
-            consoleLog.innerText = `> ${message}`;
-            consoleLog.classList.add('visible');
-            consoleTimeout = setTimeout(() => {
-                consoleLog.classList.remove('visible');
-            }, 2000);
+            const item = document.createElement('div');
+            item.className = 'console-item';
+            item.innerText = `> ${message}`;
+            consoleLog.prepend(item);
+            requestAnimationFrame(() => item.classList.add('visible'));
+            setTimeout(() => {
+                item.classList.add('exit');
+                setTimeout(() => item.remove(), 600);
+            }, 3000);
         }
 
         function triggerFeedback(el) {
@@ -334,9 +409,42 @@
             if (message) updateConsole(message);
         }
 
+        function toggleLock(index) {
+            cardData[index].locked = !cardData[index].locked;
+            const cardEl = paletteContainer.children[index];
+            if (cardData[index].locked) {
+                cardEl.classList.add('is-locked');
+                updateConsole('Card locked');
+            } else {
+                cardEl.classList.remove('is-locked');
+                updateConsole('Card unlocked');
+            }
+        }
+
+        function unlockAll() {
+            let changed = false;
+            cardData.forEach((card, i) => {
+                if (card.locked) {
+                    card.locked = false;
+                    paletteContainer.children[i].classList.remove('is-locked');
+                    changed = true;
+                }
+            });
+            if (changed) {
+                updateConsole('Array unlocked');
+            }
+        }
+
+        function handleBackgroundClick(e) {
+            if (e.target === document.body) {
+                unlockAll();
+            }
+        }
+
         function savePaletteToClipboard() {
-            if (currentPalette.length === 0) return;
-            copyText(currentPalette.join(', '), saveBtn, 'Copied array');
+            if (cardData.length === 0) return;
+            const hexes = cardData.map(c => c.hex).join(', ');
+            copyText(hexes, saveBtn, 'Copied array');
         }
 
         async function handleRegenerate() {
@@ -344,82 +452,123 @@
             regenBtn.classList.add('loading');
             triggerFeedback(regenBtn);
             
-            const cards = document.querySelectorAll('.keycard');
+            const cards = Array.from(paletteContainer.children);
+            
+            // Phase 1: Slide down only UNLOCKED cards
             cards.forEach((card, i) => {
-                setTimeout(() => card.classList.add('is-exiting'), i * 30); 
+                if (!cardData[i].locked) {
+                    setTimeout(() => card.classList.add('is-exiting'), i * 30);
+                }
             });
 
             await new Promise(r => setTimeout(r, 450));
-            generatePalette();
-            updateConsole('Recalibrated');
             
+            // Phase 2: Generate new colors only for UNLOCKED
+            cardData = cardData.map(card => {
+                if (card.locked) return card;
+                return { hex: generateHex(), locked: false };
+            });
+
+            // Phase 3: Re-render
+            cards.forEach((card, i) => {
+                if (!cardData[i].locked) {
+                    const data = cardData[i];
+                    const contrast = getContrastYIQ(data.hex);
+                    const face = card.querySelector('.card-face');
+                    const hexLabel = card.querySelector('.hex-code');
+                    const indexLabel = card.querySelector('.card-index');
+                    const scratch = card.querySelector('.scratch-bar');
+
+                    face.style.backgroundColor = data.hex;
+                    hexLabel.innerText = data.hex;
+                    hexLabel.style.color = indexLabel.style.color = (contrast === 'white' ? '#fff' : '#000');
+                    scratch.style.backgroundColor = (contrast === 'white' ? '#121212' : '#000');
+                    
+                    card.classList.remove('is-exiting');
+                }
+            });
+
+            updateConsole('Recalibrated');
             setTimeout(() => regenBtn.classList.remove('loading'), 600);
         }
 
-        function generatePalette() {
-            paletteContainer.innerHTML = '';
-            const newCards = [];
-            currentPalette = [];
+        function createCard(data, i) {
+            const contrast = getContrastYIQ(data.hex);
+            
+            const card = document.createElement('div');
+            card.className = 'keycard is-active';
+            if (data.locked) card.classList.add('is-locked');
+            
+            // Entire card click copies hex
+            card.onclick = () => copyText(data.hex, card, 'Copied hex');
 
-            for (let i = 0; i < 6; i++) {
-                const color = generateHex();
-                currentPalette.push(color);
-                const contrast = getContrastYIQ(color);
-                
-                const card = document.createElement('div');
-                card.className = 'keycard';
-                card.onclick = (e) => {
-                    e.stopPropagation();
-                    copyText(color, card, 'Copied hex');
-                };
+            const cardFace = document.createElement('div');
+            cardFace.className = 'card-face';
+            cardFace.style.backgroundColor = data.hex;
+            
+            const hexZone = document.createElement('div');
+            hexZone.className = 'hex-zone';
+            const bar = document.createElement('div');
+            bar.className = 'scratch-bar';
+            bar.style.backgroundColor = contrast === 'white' ? '#121212' : '#000';
+            hexZone.appendChild(bar);
+            cardFace.appendChild(hexZone);
 
-                const cardFace = document.createElement('div');
-                cardFace.className = 'card-face';
-                cardFace.style.backgroundColor = color;
-                
-                const hexZone = document.createElement('div');
-                hexZone.className = 'hex-zone';
-                const bar = document.createElement('div');
-                bar.className = 'scratch-bar';
-                bar.style.backgroundColor = contrast === 'white' ? '#121212' : '#000';
-                hexZone.appendChild(bar);
-                cardFace.appendChild(hexZone);
+            const indexLabel = document.createElement('span');
+            indexLabel.className = 'card-index';
+            indexLabel.innerText = `0${i + 1}`;
+            indexLabel.style.color = contrast === 'white' ? '#fff' : '#000';
+            cardFace.appendChild(indexLabel);
 
-                const index = document.createElement('span');
-                index.className = 'card-index';
-                index.innerText = `0${i + 1}`;
-                index.style.color = contrast === 'white' ? '#fff' : '#000';
-                cardFace.appendChild(index);
+            const hexLabel = document.createElement('span');
+            hexLabel.className = 'hex-code';
+            hexLabel.innerText = data.hex;
+            hexLabel.style.color = contrast === 'white' ? '#fff' : '#000';
+            cardFace.appendChild(hexLabel);
 
-                const hexLabel = document.createElement('span');
-                hexLabel.className = 'hex-code';
-                hexLabel.innerText = color;
-                hexLabel.style.color = contrast === 'white' ? '#fff' : '#000';
-                cardFace.appendChild(hexLabel);
+            card.appendChild(cardFace);
 
-                card.appendChild(cardFace);
+            // Handle/Connector
+            const connector = document.createElement('div');
+            connector.className = 'connector';
+            connector.onclick = (e) => {
+                e.stopPropagation(); // Don't copy hex
+                toggleLock(i);
+            };
 
-                const connector = document.createElement('div');
-                connector.className = 'connector';
-                for(let j=0; j<3; j++) {
-                    const strip = document.createElement('div');
-                    strip.className = 'gold-strip';
-                    connector.appendChild(strip);
-                }
-                card.appendChild(connector);
-
-                paletteContainer.appendChild(card);
-                newCards.push(card);
+            for(let j=0; j<3; j++) {
+                const strip = document.createElement('div');
+                strip.className = 'gold-strip';
+                connector.appendChild(strip);
             }
+            card.appendChild(connector);
 
-            requestAnimationFrame(() => {
-                newCards.forEach((card, i) => {
-                    setTimeout(() => card.classList.add('is-active'), i * 50); 
-                });
+            return card;
+        }
+
+        function initializePalette() {
+            paletteContainer.innerHTML = '';
+            cardData = Array.from({ length: 6 }, () => ({ hex: generateHex(), locked: false }));
+            
+            cardData.forEach((data, i) => {
+                const card = createCard(data, i);
+                paletteContainer.appendChild(card);
+                setTimeout(() => card.classList.add('is-active'), i * 50);
             });
         }
 
-        window.onload = generatePalette;
+        // Global shortcuts
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault(); // Stop page scroll
+                handleRegenerate();
+            }
+            if (e.key.toLowerCase() === 'c') {
+                savePaletteToClipboard();
+            }
+        });
+
+        window.onload = initializePalette;
     </script>
 </body>
 </html>
