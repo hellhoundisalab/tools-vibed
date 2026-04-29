@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Industrial Keycard Palette</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'JetBrains+Mono', monospace;
+            background-color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Console Log - Top Left */
+        #console-log {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            font-size: 0.65rem;
+            color: rgba(0, 0, 0, 0.2); /* Very faint */
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            pointer-events: none;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        #console-log.visible {
+            opacity: 1;
+        }
+
+        /* Control Wrapper */
+        .controls-wrapper {
+            position: relative;
+            z-index: 100;
+            display: flex;
+            gap: 1rem;
+            margin-top: -30vh;
+        }
+
+        /* Keycard Container */
+        .palette-container {
+            position: fixed;
+            bottom: -380px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 2rem;
+            width: fit-content;
+        }
+
+        /* The Keycard Main Container */
+        .keycard {
+            position: relative;
+            width: 260px;
+            height: 560px; 
+            cursor: pointer;
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+            margin-left: -140px;
+            transform: translateY(600px); 
+            z-index: 1;
+        }
+
+        .keycard.is-active {
+            transform: translateY(0);
+        }
+
+        .keycard.is-exiting {
+            transform: translateY(600px);
+            opacity: 0;
+        }
+
+        .keycard:first-child {
+            margin-left: 0;
+        }
+
+        /* The Card Face */
+        .card-face {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            box-shadow: -15px 0 40px rgba(0,0,0,0.06), 10px 0 30px rgba(0,0,0,0.03);
+            transition: background-color 0.4s ease;
+        }
+
+        /* Black Connector Handle - Fixed Z-index */
+        .connector {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 40px;
+            background: #121212;
+            border-radius: 6px 6px 0 0;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            padding: 8px 15px 0 15px;
+            clip-path: polygon(0% 20%, 15% 20%, 15% 0%, 85% 0%, 85% 20%, 100% 20%, 100% 100%, 0% 100%);
+            z-index: 60;
+        }
+
+        .gold-strip {
+            width: 6px;
+            height: 20px;
+            background: linear-gradient(to bottom, #d4af37, #f1d592);
+            border-radius: 1px;
+            opacity: 0.8;
+        }
+
+        .keycard.is-active:not(.is-exiting):hover {
+            transform: translateY(-80px); 
+        }
+
+        /* Constrained Scratch Zone - Strictly over the Hex area only */
+        .hex-zone {
+            position: absolute;
+            top: 95px; 
+            left: 30px; 
+            width: 22px; 
+            height: 110px; 
+            overflow: hidden;
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        .scratch-bar {
+            position: absolute;
+            top: -220%; 
+            left: 0;
+            width: 100%;
+            height: 260px; 
+            background: #1a1a1a;
+            opacity: 0;
+        }
+
+        .keycard.feedback .scratch-bar {
+            animation: scratchLocalized 0.85s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+        }
+
+        @keyframes scratchLocalized {
+            0% { top: -220%; opacity: 0; }
+            15% { opacity: 1; }
+            85% { opacity: 1; }
+            100% { top: 220%; opacity: 0; }
+        }
+
+        .card-index {
+            position: absolute;
+            left: 30px;
+            top: 35px;
+            font-size: 1.6rem;
+            font-weight: 400;
+            opacity: 0.35;
+            z-index: 10;
+        }
+
+        .hex-code {
+            position: absolute;
+            top: 190px; 
+            left: 30px;
+            font-size: 1.1rem;
+            letter-spacing: 0.2em;
+            font-weight: 300;
+            opacity: 0.25; 
+            transform: rotate(-90deg);
+            transform-origin: left top;
+            white-space: nowrap;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        .keycard:hover .hex-code {
+            opacity: 0.9;
+        }
+
+        /* Industrial Buttons */
+        .btn-industrial {
+            position: relative;
+            width: 220px;
+            height: 50px;
+            border: 1px solid #e2e2e2;
+            background: #ffffff;
+            color: #1a1a1a;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4em;
+        }
+
+        .btn-passer {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: #1a1a1a;
+            z-index: 5;
+        }
+
+        .btn-industrial.secondary {
+            background: #1a1a1a;
+            color: #ffffff;
+            border-color: #1a1a1a;
+        }
+
+        .btn-industrial.secondary .btn-passer {
+            background: #ffffff;
+        }
+
+        .btn-industrial.active-feedback .btn-passer {
+            animation: scanHorizontal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes scanHorizontal {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .btn-industrial:hover:not(.loading) {
+            border-color: #1a1a1a;
+        }
+
+        .btn-industrial.loading {
+            cursor: wait;
+            opacity: 0.6;
+        }
+
+        @media (max-width: 800px) {
+            #console-log { top: 20px; left: 20px; font-size: 0.55rem; }
+            .controls-wrapper { flex-direction: column; align-items: center; gap: 0.5rem; margin-top: -15vh; }
+            .btn-industrial { width: 180px; height: 44px; font-size: 0.6rem; }
+            .keycard { width: 140px; height: 400px; margin-left: -80px; }
+            .connector { width: 80px; height: 30px; top: -15px; }
+            .gold-strip { width: 4px; height: 12px; }
+            .palette-container { bottom: -280px; }
+            .keycard.is-active:not(.is-exiting):hover { transform: translateY(-60px); }
+            .card-index { top: 25px; left: 20px; font-size: 1.1rem; }
+            .hex-code { top: 140px; left: 20px; font-size: 0.8rem; }
+            .hex-zone { top: 65px; left: 20px; width: 20px; height: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="console-log"></div>
+
+    <div class="controls-wrapper">
+        <button id="regenBtn" class="btn-industrial" onclick="handleRegenerate()">
+            <span class="relative z-10">Recalibrate</span>
+            <div class="btn-passer"></div>
+        </button>
+        <button id="saveBtn" class="btn-industrial secondary" onclick="savePaletteToClipboard()">
+            <span class="relative z-10">Export Array</span>
+            <div class="btn-passer"></div>
+        </button>
+    </div>
+
+    <div class="palette-container" id="palette">
+        <!-- Keycards injected here -->
+    </div>
+
+    <script>
+        const paletteContainer = document.getElementById('palette');
+        const regenBtn = document.getElementById('regenBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const consoleLog = document.getElementById('console-log');
+        let currentPalette = [];
+        let consoleTimeout;
+
+        function generateHex() {
+            const chars = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += chars[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        function getContrastYIQ(hexcolor){
+            hexcolor = hexcolor.replace("#", "");
+            var r = parseInt(hexcolor.substr(0,2),16);
+            var g = parseInt(hexcolor.substr(2,2),16);
+            var b = parseInt(hexcolor.substr(4,2),16);
+            var yiq = ((r*299)+(g*587)+(b*114))/1000;
+            return (yiq >= 128) ? 'black' : 'white';
+        }
+
+        function updateConsole(message) {
+            clearTimeout(consoleTimeout);
+            consoleLog.innerText = `> ${message}`;
+            consoleLog.classList.add('visible');
+            consoleTimeout = setTimeout(() => {
+                consoleLog.classList.remove('visible');
+            }, 2000);
+        }
+
+        function triggerFeedback(el) {
+            el.classList.remove('active-feedback', 'feedback');
+            void el.offsetWidth; 
+            el.classList.add(el.tagName === 'BUTTON' ? 'active-feedback' : 'feedback');
+            setTimeout(() => el.classList.remove('active-feedback', 'feedback'), 900);
+        }
+
+        function copyText(text, el, message) {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            if (el) triggerFeedback(el);
+            if (message) updateConsole(message);
+        }
+
+        function savePaletteToClipboard() {
+            if (currentPalette.length === 0) return;
+            copyText(currentPalette.join(', '), saveBtn, 'Copied array');
+        }
+
+        async function handleRegenerate() {
+            if (regenBtn.classList.contains('loading')) return;
+            regenBtn.classList.add('loading');
+            triggerFeedback(regenBtn);
+            
+            const cards = document.querySelectorAll('.keycard');
+            cards.forEach((card, i) => {
+                setTimeout(() => card.classList.add('is-exiting'), i * 30); 
+            });
+
+            await new Promise(r => setTimeout(r, 450));
+            generatePalette();
+            updateConsole('Recalibrated');
+            
+            setTimeout(() => regenBtn.classList.remove('loading'), 600);
+        }
+
+        function generatePalette() {
+            paletteContainer.innerHTML = '';
+            const newCards = [];
+            currentPalette = [];
+
+            for (let i = 0; i < 6; i++) {
+                const color = generateHex();
+                currentPalette.push(color);
+                const contrast = getContrastYIQ(color);
+                
+                const card = document.createElement('div');
+                card.className = 'keycard';
+                card.onclick = (e) => {
+                    e.stopPropagation();
+                    copyText(color, card, 'Copied hex');
+                };
+
+                const cardFace = document.createElement('div');
+                cardFace.className = 'card-face';
+                cardFace.style.backgroundColor = color;
+                
+                const hexZone = document.createElement('div');
+                hexZone.className = 'hex-zone';
+                const bar = document.createElement('div');
+                bar.className = 'scratch-bar';
+                bar.style.backgroundColor = contrast === 'white' ? '#121212' : '#000';
+                hexZone.appendChild(bar);
+                cardFace.appendChild(hexZone);
+
+                const index = document.createElement('span');
+                index.className = 'card-index';
+                index.innerText = `0${i + 1}`;
+                index.style.color = contrast === 'white' ? '#fff' : '#000';
+                cardFace.appendChild(index);
+
+                const hexLabel = document.createElement('span');
+                hexLabel.className = 'hex-code';
+                hexLabel.innerText = color;
+                hexLabel.style.color = contrast === 'white' ? '#fff' : '#000';
+                cardFace.appendChild(hexLabel);
+
+                card.appendChild(cardFace);
+
+                const connector = document.createElement('div');
+                connector.className = 'connector';
+                for(let j=0; j<3; j++) {
+                    const strip = document.createElement('div');
+                    strip.className = 'gold-strip';
+                    connector.appendChild(strip);
+                }
+                card.appendChild(connector);
+
+                paletteContainer.appendChild(card);
+                newCards.push(card);
+            }
+
+            requestAnimationFrame(() => {
+                newCards.forEach((card, i) => {
+                    setTimeout(() => card.classList.add('is-active'), i * 50); 
+                });
+            });
+        }
+
+        window.onload = generatePalette;
+    </script>
+</body>
+</html>
