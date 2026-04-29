@@ -19,23 +19,53 @@
             justify-content: center;
             align-items: center;
             touch-action: manipulation;
+            transition: background-color 0.5s ease;
+        }
+
+        /* Top Return Bar */
+        .return-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 24px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 15px;
+            z-index: 300;
+            text-decoration: none;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
+        }
+
+        .return-bar:hover {
+            background: #222;
+        }
+
+        .return-bar span {
+            color: #fff;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            font-weight: 400;
         }
 
         /* Console Log Container - Top Left */
         #console-log {
             position: fixed;
-            top: 30px;
+            top: 45px; 
             left: 30px;
             display: flex;
             flex-direction: column;
             gap: 4px;
             pointer-events: none;
             z-index: 200;
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
 
         .console-item {
             font-size: 0.65rem;
-            color: rgba(0, 0, 0, 0.2); 
+            color: rgba(0, 0, 0, 0.4); 
             text-transform: uppercase;
             letter-spacing: 0.15em;
             opacity: 0;
@@ -62,6 +92,7 @@
             display: flex;
             gap: 1rem;
             margin-top: -30vh;
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
         }
 
         /* Keycard Container */
@@ -91,12 +122,16 @@
             user-select: none;
         }
 
+        .keycard.is-dragging {
+            transition: none !important;
+        }
+
         .keycard.is-active {
             transform: translateY(0);
         }
 
         .keycard.is-exiting {
-            transform: translateY(600px);
+            transform: translateY(700px) !important;
             opacity: 0;
         }
 
@@ -106,7 +141,7 @@
 
         /* Locked State: Subtle lift */
         .keycard.is-locked {
-            transform: translateY(-15px) !important;
+            transform: translateY(-15px);
         }
 
         /* The Card Face */
@@ -263,6 +298,9 @@
             justify-content: center;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             border-radius: 4px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
         }
 
         .btn-passer {
@@ -307,8 +345,27 @@
             opacity: 0.6;
         }
 
+        /* Shutdown Global Exit States */
+        body.shutting-down {
+            background-color: #f5f5f5;
+        }
+
+        body.shutting-down .controls-wrapper {
+            transform: translateY(100px);
+            opacity: 0;
+        }
+
+        body.shutting-down .return-bar {
+            transform: translateY(-24px);
+        }
+
+        body.shutting-down #console-log {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
         @media (max-width: 800px) {
-            #console-log { top: 20px; left: 20px; }
+            #console-log { top: 35px; left: 20px; }
             .controls-wrapper { gap: 0.5rem; margin-top: -15vh; }
             .btn-industrial { width: 100px; height: 44px; }
             .keycard { width: 140px; height: 400px; margin-left: -80px; }
@@ -325,9 +382,13 @@
 </head>
 <body onclick="handleBackgroundClick(event)">
 
+    <a href="/" class="return-bar" onclick="handleReturn(event)">
+        <span><<<</span>
+    </a>
+
     <div id="console-log"></div>
 
-    <div class="controls-wrapper">
+    <div class="controls-wrapper" id="controls">
         <button id="regenBtn" class="btn-industrial" onclick="handleRegenerate()">
             <div class="relative z-10">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
@@ -361,8 +422,34 @@
         const saveBtn = document.getElementById('saveBtn');
         const consoleLog = document.getElementById('console-log');
         
-        let cardData = []; // Array of { hex: string, locked: boolean }
+        let cardData = []; 
         let consoleTimeout;
+
+        // --- NAVIGATION LOGIC ---
+
+        function handleReturn(e) {
+            e.preventDefault();
+            const url = e.currentTarget.getAttribute('href');
+            
+            // Add shutdown class to body
+            document.body.classList.add('shutting-down');
+            
+            // Trigger card exit animation for all cards
+            const cards = Array.from(paletteContainer.children);
+            cards.forEach((card, i) => {
+                // Slightly staggered for mechanical feel
+                setTimeout(() => card.classList.add('is-exiting'), i * 40);
+            });
+
+            updateConsole('System Shutdown Initiated');
+
+            // Wait for animations to complete before navigating
+            setTimeout(() => {
+                window.location.href = url;
+            }, 650);
+        }
+
+        // --- CORE LOGIC ---
 
         function generateHex() {
             const chars = '0123456789ABCDEF';
@@ -391,7 +478,7 @@
             setTimeout(() => {
                 item.classList.add('exit');
                 setTimeout(() => item.remove(), 600);
-            }, 3000);
+            }, 5000);
         }
 
         function triggerFeedback(el) {
@@ -440,15 +527,13 @@
                     changed = true;
                 }
             });
-            if (changed) {
-                updateConsole('Array unlocked');
-            }
+            if (changed) updateConsole('Array unlocked');
         }
 
         function handleBackgroundClick(e) {
-            if (e.target === document.body) {
-                unlockAll();
-            }
+            // Prevent interference during shutdown
+            if (document.body.classList.contains('shutting-down')) return;
+            if (e.target === document.body) unlockAll();
         }
 
         function savePaletteToClipboard() {
@@ -463,7 +548,6 @@
             triggerFeedback(regenBtn);
             
             const cards = Array.from(paletteContainer.children);
-            
             cards.forEach((card, i) => {
                 if (!cardData[i].locked) {
                     setTimeout(() => card.classList.add('is-exiting'), i * 30);
@@ -477,6 +561,13 @@
                 return { hex: generateHex(), locked: false };
             });
 
+            updatePaletteUI();
+            updateConsole('Recalibrated');
+            setTimeout(() => regenBtn.classList.remove('loading'), 600);
+        }
+
+        function updatePaletteUI() {
+            const cards = Array.from(paletteContainer.children);
             cards.forEach((card, i) => {
                 if (!cardData[i].locked) {
                     const data = cardData[i];
@@ -494,48 +585,50 @@
                     card.classList.remove('is-exiting');
                 }
             });
-
-            updateConsole('Recalibrated');
-            setTimeout(() => regenBtn.classList.remove('loading'), 600);
         }
 
         function createCard(data, i) {
             const contrast = getContrastYIQ(data.hex);
-            
             const card = document.createElement('div');
             card.className = 'keycard is-active';
             if (data.locked) card.classList.add('is-locked');
             
             let startY = 0;
             let startTime = 0;
-            let startTarget = null; // Track where interaction began
+            let startTarget = null;
+            let isDragging = false;
+            const lockPos = -15; 
+            const dragLimit = 60; 
 
             card.addEventListener('pointerdown', (e) => {
+                if (document.body.classList.contains('shutting-down')) return;
                 startY = e.clientY;
                 startTime = Date.now();
                 startTarget = e.target;
                 card.setPointerCapture(e.pointerId);
+                card.classList.add('is-dragging');
+                isDragging = true;
+            });
+
+            card.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                const deltaY = e.clientY - startY;
+                const baseOffset = cardData[i].locked ? lockPos : 0;
+                let newOffset = Math.max(Math.min(baseOffset + deltaY, dragLimit / 2), -dragLimit);
+                card.style.transform = `translateY(${newOffset}px)`;
             });
 
             card.addEventListener('pointerup', (e) => {
-                const endY = e.clientY;
-                const diff = startY - endY;
-                const duration = Date.now() - startTime;
-
-                if (Math.abs(diff) > 40 && duration < 300) {
-                    if (diff > 0) {
-                        setLockState(i, true); // Swipe Up
-                    } else {
-                        setLockState(i, false); // Swipe Down
-                    }
-                } else if (Math.abs(diff) < 10) {
-                    // Tap/Click - Detect startTarget instead of e.target due to pointer capture re-assigning e.target to the card
-                    const isHandle = startTarget.closest('.connector');
-                    if (isHandle) {
-                        toggleLock(i);
-                    } else {
-                        copyText(data.hex, card, 'Copied hex');
-                    }
+                if (!isDragging) return;
+                isDragging = false;
+                card.classList.remove('is-dragging');
+                card.style.transform = ''; 
+                const diff = Math.abs(startY - e.clientY);
+                if (diff > 20) {
+                    toggleLock(i);
+                } else if (Date.now() - startTime < 300) {
+                    if (startTarget.closest('.connector')) toggleLock(i);
+                    else copyText(data.hex, card, 'Copied hex');
                 }
                 card.releasePointerCapture(e.pointerId);
             });
@@ -568,7 +661,6 @@
 
             const connector = document.createElement('div');
             connector.className = 'connector';
-
             for(let j=0; j<3; j++) {
                 const strip = document.createElement('div');
                 strip.className = 'gold-strip';
@@ -582,22 +674,21 @@
         function initializePalette() {
             paletteContainer.innerHTML = '';
             cardData = Array.from({ length: 6 }, () => ({ hex: generateHex(), locked: false }));
-            
             cardData.forEach((data, i) => {
                 const card = createCard(data, i);
                 paletteContainer.appendChild(card);
                 setTimeout(() => card.classList.add('is-active'), i * 50);
             });
+            updateConsole('Systems Online');
         }
 
         window.addEventListener('keydown', (e) => {
+            if (document.body.classList.contains('shutting-down')) return;
             if (e.code === 'Space') {
                 e.preventDefault();
                 handleRegenerate();
             }
-            if (e.key.toLowerCase() === 'c') {
-                savePaletteToClipboard();
-            }
+            if (e.key.toLowerCase() === 'c') savePaletteToClipboard();
         });
 
         window.onload = initializePalette;
