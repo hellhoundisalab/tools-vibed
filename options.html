@@ -30,6 +30,10 @@
             0% { transform: translate(-50%, -100px); opacity: 0; }
             100% { transform: translate(-50%, -50%); opacity: 1; }
         }
+        @keyframes slideInTop {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(0); }
+        }
 
         /* Exit animations */
         @keyframes slideOutUp {
@@ -43,6 +47,10 @@
         @keyframes slideOutRight {
             0% { transform: translate(0, -50%); opacity: 1; }
             100% { transform: translate(120%, -50%); opacity: 0; }
+        }
+        @keyframes slideOutTop {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-100%); }
         }
 
         /* Result reveal */
@@ -59,6 +67,7 @@
         .animate-reveal-out { animation: revealOutRight 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
         /* Animation class assignments */
+        .entrance-back { animation: slideInTop 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         .entrance-stripes { animation: slideInUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         @media (min-aspect-ratio: 1/1) {
             .entrance-stripes { animation: slideInRight 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
@@ -66,6 +75,7 @@
 
         .entrance-center { animation: slideInDown 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
+        .exit-back { animation: slideOutTop 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important; }
         .exit-stripes { animation: slideOutDown 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important; }
         @media (min-aspect-ratio: 1/1) {
             .exit-stripes { animation: slideOutRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important; }
@@ -94,7 +104,7 @@
             width: 0%;
             background-color: #ffffff;
             z-index: 0;
-            transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+            transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .winner-active::before { width: 100%; }
@@ -249,7 +259,7 @@
 <body class="bg-white text-black font-mono selection:bg-black selection:text-white overflow-hidden">
 
     <!-- Top Navigation Strip -->
-    <a id="back-link" href="/" class="fixed top-0 left-0 w-full h-[24px] bg-black text-white flex items-center justify-center text-sm tracking-widest z-[60] hover:bg-zinc-800 transition-colors">
+    <a id="back-link" href="/" class="fixed top-0 left-0 w-full h-[24px] bg-black text-white flex items-center justify-center text-sm tracking-widest z-[60] hover:bg-zinc-800 transition-colors entrance-back">
         &lt;&lt;&lt;
     </a>
 
@@ -305,6 +315,7 @@
             centerArea.style.opacity = "1";
             stripesContainer.classList.remove('entrance-stripes');
             stripesContainer.style.opacity = "1";
+            backLink.classList.remove('entrance-back');
         }, 800);
 
         function updateCenterButton() {
@@ -372,7 +383,6 @@
                         const hasContent = options[i].trim() !== '';
 
                         if (isLastSlot && hasContent) {
-                            // If user is at the very last slot and it has text, add a new empty slot
                             lastAction = 'add';
                             options.push("");
                             renderStripes();
@@ -381,7 +391,6 @@
                                 inps[i+1]?.focus();
                             });
                         } else if (!isLastSlot) {
-                            // Just move focus to the next existing slot
                             stripesContainer.querySelectorAll('input')[i+1]?.focus();
                         }
                     } else if (e.key === 'Backspace' && !e.target.value && options.length > 1) {
@@ -467,6 +476,7 @@
             const targetUrl = e.currentTarget.href;
             centerArea.classList.add('exit-center');
             stripesContainer.classList.add('exit-stripes');
+            backLink.classList.add('exit-back');
             setTimeout(() => {
                 window.location.href = targetUrl;
             }, 500);
