@@ -18,6 +18,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            touch-action: manipulation;
         }
 
         /* Console Log Container - Top Left */
@@ -86,6 +87,8 @@
             margin-left: -140px;
             transform: translateY(600px); 
             z-index: 1;
+            touch-action: none; 
+            user-select: none;
         }
 
         .keycard.is-active {
@@ -101,7 +104,7 @@
             margin-left: 0;
         }
 
-        /* Locked State: Subtle lift, no z-index priority */
+        /* Locked State: Subtle lift */
         .keycard.is-locked {
             transform: translateY(-15px) !important;
         }
@@ -178,7 +181,7 @@
             100% { top: 100%; }
         }
 
-        /* Hover Lift: Reduced for convenience */
+        /* Hover Lift */
         .keycard.is-active:not(.is-exiting):not(.is-locked):hover {
             transform: translateY(-6px); 
         }
@@ -409,16 +412,23 @@
             if (message) updateConsole(message);
         }
 
-        function toggleLock(index) {
-            cardData[index].locked = !cardData[index].locked;
+        function setLockState(index, shouldLock) {
+            if (cardData[index].locked === shouldLock) return;
+            
+            cardData[index].locked = shouldLock;
             const cardEl = paletteContainer.children[index];
-            if (cardData[index].locked) {
+            
+            if (shouldLock) {
                 cardEl.classList.add('is-locked');
                 updateConsole('Card locked');
             } else {
                 cardEl.classList.remove('is-locked');
                 updateConsole('Card unlocked');
             }
+        }
+
+        function toggleLock(index) {
+            setLockState(index, !cardData[index].locked);
         }
 
         function unlockAll() {
@@ -454,7 +464,6 @@
             
             const cards = Array.from(paletteContainer.children);
             
-            // Phase 1: Slide down only UNLOCKED cards
             cards.forEach((card, i) => {
                 if (!cardData[i].locked) {
                     setTimeout(() => card.classList.add('is-exiting'), i * 30);
@@ -463,13 +472,11 @@
 
             await new Promise(r => setTimeout(r, 450));
             
-            // Phase 2: Generate new colors only for UNLOCKED
             cardData = cardData.map(card => {
                 if (card.locked) return card;
                 return { hex: generateHex(), locked: false };
             });
 
-            // Phase 3: Re-render
             cards.forEach((card, i) => {
                 if (!cardData[i].locked) {
                     const data = cardData[i];
@@ -499,8 +506,39 @@
             card.className = 'keycard is-active';
             if (data.locked) card.classList.add('is-locked');
             
-            // Entire card click copies hex
-            card.onclick = () => copyText(data.hex, card, 'Copied hex');
+            let startY = 0;
+            let startTime = 0;
+            let startTarget = null; // Track where interaction began
+
+            card.addEventListener('pointerdown', (e) => {
+                startY = e.clientY;
+                startTime = Date.now();
+                startTarget = e.target;
+                card.setPointerCapture(e.pointerId);
+            });
+
+            card.addEventListener('pointerup', (e) => {
+                const endY = e.clientY;
+                const diff = startY - endY;
+                const duration = Date.now() - startTime;
+
+                if (Math.abs(diff) > 40 && duration < 300) {
+                    if (diff > 0) {
+                        setLockState(i, true); // Swipe Up
+                    } else {
+                        setLockState(i, false); // Swipe Down
+                    }
+                } else if (Math.abs(diff) < 10) {
+                    // Tap/Click - Detect startTarget instead of e.target due to pointer capture re-assigning e.target to the card
+                    const isHandle = startTarget.closest('.connector');
+                    if (isHandle) {
+                        toggleLock(i);
+                    } else {
+                        copyText(data.hex, card, 'Copied hex');
+                    }
+                }
+                card.releasePointerCapture(e.pointerId);
+            });
 
             const cardFace = document.createElement('div');
             cardFace.className = 'card-face';
@@ -528,13 +566,8 @@
 
             card.appendChild(cardFace);
 
-            // Handle/Connector
             const connector = document.createElement('div');
             connector.className = 'connector';
-            connector.onclick = (e) => {
-                e.stopPropagation(); // Don't copy hex
-                toggleLock(i);
-            };
 
             for(let j=0; j<3; j++) {
                 const strip = document.createElement('div');
@@ -557,10 +590,9 @@
             });
         }
 
-        // Global shortcuts
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
-                e.preventDefault(); // Stop page scroll
+                e.preventDefault();
                 handleRegenerate();
             }
             if (e.key.toLowerCase() === 'c') {
