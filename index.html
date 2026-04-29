@@ -19,8 +19,8 @@
 
         /* Animations */
         @keyframes slideRight {
-            0% { transform: translateX(-30px); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
+            0% { translate: -30px 0; opacity: 0; }
+            100% { translate: 0 0; opacity: 1; }
         }
 
         @keyframes fadeIn {
@@ -31,6 +31,11 @@
         .square-row > div {
             opacity: 0; /* Hidden initially */
             animation: slideRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            transition: transform 0.2s ease-out;
+        }
+
+        .square-row > div:hover {
+            transform: rotate(-2deg);
         }
 
         /* Staggered delays for the 11 squares */
@@ -120,16 +125,43 @@
                 </div>
             </a>
 
-            <!-- EMPTY SLOT (For future projects) -->
-            <div class="aspect-square bg-zinc-50/50 border border-dashed border-zinc-300 flex flex-col items-center justify-center p-6 text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" class="text-zinc-300">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </div>
+            <!-- FLASHCARD 02: Options -->
+            <a href="options.html" class="group block aspect-square bg-white border border-zinc-300 relative overflow-hidden transition-all duration-300 hover:border-orange-600 hover:shadow-[4px_4px_0px_0px_rgba(234,88,12,1)] flex flex-col justify-between p-6">
+                <!-- Top Info -->
+                <div class="flex justify-end items-start">
+                    <!-- Arrow Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" class="text-zinc-300 group-hover:text-orange-600 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1">
+                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                        <polyline points="7 7 17 7 17 17"></polyline>
+                    </svg>
+                </div>
+
+                <!-- Center Content / Abstract Visual -->
+                <div class="flex-grow flex items-center justify-center py-8">
+                    <!-- Abstract representation of options -->
+                    <div class="transform group-hover:scale-105 transition-transform duration-300">
+                        <!-- Square with Left Arrow and Inside Stripes -->
+                        <div class="w-[84px] h-[84px] bg-zinc-50 border border-zinc-200 shadow-sm flex items-center justify-center relative overflow-hidden">
+                            <span class="text-zinc-800 font-mono text-4xl font-medium relative z-10 pr-[18px]">←</span>
+                            <!-- Peeking Stripes Inside (Touching) -->
+                            <div class="absolute right-0 top-1/2 -translate-y-1/2 flex flex-col z-0">
+                                <div class="h-1.5 w-6 bg-zinc-900"></div>
+                                <div class="h-1.5 w-6 bg-zinc-500"></div>
+                                <div class="h-1.5 w-6 bg-zinc-300"></div>
+                                <div class="h-1.5 w-6 bg-orange-600"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Info -->
+                <div class="border-t border-zinc-100 pt-4 mt-auto">
+                    <h3 class="text-lg font-semibold tracking-tight text-zinc-900 group-hover:text-orange-600 transition-colors">Options</h3>
+                </div>
+            </a>
 
             <!-- EMPTY SLOT -->
-            <div class="aspect-square bg-zinc-50/50 border border-dashed border-zinc-300 flex flex-col items-center justify-center p-6 text-center hidden sm:flex">
+            <div class="aspect-square bg-zinc-50/50 border border-dashed border-zinc-300 flex flex-col items-center justify-center p-6 text-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" class="text-zinc-300">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>

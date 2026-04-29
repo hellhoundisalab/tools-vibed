@@ -560,7 +560,8 @@
 
         function savePaletteToClipboard() {
             if (cardData.length === 0) return;
-            const hexes = cardData.map(c => c.hex).join(', ');
+            // Changed from comma-space to newline separator
+            const hexes = cardData.map(c => c.hex).join('\n');
             copyText(hexes, saveBtn, 'Copied array');
         }
 

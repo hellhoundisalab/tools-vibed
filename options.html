@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Choice Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar to maintain the minimalist aesthetic */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d1d5db;
+        }
+
+        /* Custom bouncy easing */
+        .ease-bounce {
+            transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Smooth reveal animation for the result - stationary text effect */
+        @keyframes revealInRight {
+            0% { clip-path: inset(0 0 0 100%); opacity: 0; }
+            100% { clip-path: inset(0 0 0 0); opacity: 1; }
+        }
+        .animate-reveal-in {
+            animation: revealInRight 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* Smooth slide out animation to the right */
+        @keyframes revealOutRight {
+            0% { clip-path: inset(0 0 0 0); opacity: 1; }
+            100% { clip-path: inset(0 0 0 100%); opacity: 0; }
+        }
+        .animate-reveal-out {
+            animation: revealOutRight 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* Stripe entrance - Vertical slide only to avoid horizontal jitter */
+        @keyframes stripeIn {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .animate-stripe-in {
+            animation: stripeIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* Stripe exit - Vertical slide down and fade */
+        @keyframes stripeOut {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(30px); }
+        }
+        .animate-stripe-out {
+            animation: stripeOut 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* Flashing underscore */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .blinking-placeholder::placeholder {
+            animation: blink 1s step-end infinite;
+            color: #000;
+            opacity: 0.6;
+        }
+
+        /* Aspect ratio based layout logic */
+        :root {
+            /* We use a CSS variable for the horizontal slide so it doesn't break the Y positioning */
+            --stripe-slide: 0%;
+        }
+
+        #stripes-container {
+            width: 95vw;
+            bottom: 0;
+            top: auto;
+            transform: translateX(var(--stripe-slide));
+            z-index: 5; /* Lower z-index so it slides under the center button in vertical */
+            max-height: 75vh;
+        }
+
+        @media (min-aspect-ratio: 1/1) {
+            #stripes-container {
+                width: 25vw;
+                min-width: 320px;
+                top: 50%;
+                bottom: auto;
+                /* Combines vertical centering with our dynamic horizontal slide variable */
+                transform: translateY(-50%) translateX(var(--stripe-slide));
+                z-index: 50; /* Higher z-index for landscape mode */
+                max-height: 90vh;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-black font-mono selection:bg-black selection:text-white overflow-hidden">
+
+    <!-- Top Navigation Strip -->
+    <a href="/" class="fixed top-0 left-0 w-full h-[24px] bg-black text-white flex items-center justify-center text-sm tracking-widest z-[60] hover:text-gray-300 transition-colors">
+        &lt;&lt;&lt;
+    </a>
+
+    <div class="relative min-h-screen flex flex-col items-center justify-center">
+        
+        <!-- Central Action Area -->
+        <!-- Fixed top-16 and higher z-index (z-20) on mobile/narrow screens -->
+        <div id="center-area" class="fixed sm:relative top-16 sm:top-auto left-1/2 sm:left-auto -translate-x-1/2 sm:translate-x-0 z-20 flex items-center justify-center w-full max-w-xl p-4 transition-all duration-300 opacity-100">
+            <button id="pick-btn" class="group relative flex items-center justify-center w-24 h-24 md:w-32 md:h-32 border border-gray-300 rounded-full transition-all duration-200 opacity-30 cursor-not-allowed bg-gray-50" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 transform transition-transform group-hover:-translate-x-1">
+                    <path d="m12 19-7-7 7-7"/>
+                    <path d="M19 12H5"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Full Screen Result View -->
+        <div id="fullscreen" class="absolute inset-0 z-40 hidden flex-col items-center justify-center cursor-pointer" onclick="hideFullscreen()">
+            <h2 id="fullscreen-text" class="text-[15vw] md:text-[12vw] max-w-[80vw] leading-[0.85] font-black uppercase text-black text-center break-words px-4 mix-blend-darken">
+            </h2>
+        </div>
+        
+        <!-- The Editable Stripes on the Right -->
+        <div id="stripes-container" class="fixed right-[-24px] flex flex-col -space-y-4 overflow-y-auto overflow-x-visible py-8 pl-12 transition-all duration-500 ease-bounce">
+            <!-- Stripes generated via JS -->
+        </div>
+
+    </div>
+
+    <script>
+        // State
+        let options = ["COFFEE", "TEA", "WATER", "ENERGY DRINK", ""];
+        let lastSelectedStripeIndex = null;
+        let lastAction = null; 
+        
+        const INDUSTRIAL_COLORS = [
+            '#FFEB3B', '#00E676', '#00E5FF', '#FF4081', '#FF9100', 
+            '#E040FB', '#1DE9B6', '#FF5252', '#B2FF59', '#64B5F6'
+        ];
+
+        const stripesContainer = document.getElementById('stripes-container');
+        const pickBtn = document.getElementById('pick-btn');
+        const fullscreen = document.getElementById('fullscreen');
+        const fullscreenText = document.getElementById('fullscreen-text');
+        const centerArea = document.getElementById('center-area');
+
+        const getColor = (index) => INDUSTRIAL_COLORS[index % INDUSTRIAL_COLORS.length];
+        
+        const getValidItems = () => {
+            return options
+                .map((text, index) => ({ text: text.trim(), index }))
+                .filter(item => item.text !== '');
+        };
+
+        function updateCenterButton() {
+            const validItemsCount = getValidItems().length;
+            if (validItemsCount < 2) {
+                pickBtn.disabled = true;
+                pickBtn.className = "group relative flex items-center justify-center w-24 h-24 md:w-32 md:h-32 border border-gray-300 rounded-full transition-all duration-200 opacity-30 cursor-not-allowed bg-gray-50";
+            } else {
+                pickBtn.disabled = false;
+                pickBtn.className = "group relative flex items-center justify-center w-24 h-24 md:w-32 md:h-32 border border-gray-300 rounded-full transition-all duration-200 bg-transparent hover:bg-gray-50 hover:border-gray-400 cursor-pointer";
+            }
+        }
+
+        function renderStripes() {
+            stripesContainer.innerHTML = '';
+            
+            options.forEach((opt, i) => {
+                const zIndex = options.length - i;
+                const isFilled = opt.trim() !== '';
+                const bgColor = isFilled ? getColor(i) : '#f3f4f6';
+                const shadow = isFilled ? 'inset 0 2px 3px rgba(255,255,255,0.4), 0 -2px 6px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.1)' : 'none';
+
+                const stripe = document.createElement('div');
+                stripe.id = `stripe-${i}`;
+                
+                let classes = "flex items-stretch w-full transition-all duration-400 ease-bounce rounded-l-xl relative hover:-translate-x-[12px]";
+                
+                if (lastAction === 'add' && i === options.length - 1) {
+                    classes += " animate-stripe-in";
+                }
+                
+                stripe.className = classes;
+                stripe.style.zIndex = zIndex;
+                stripe.style.backgroundColor = bgColor;
+                stripe.style.boxShadow = shadow;
+
+                const innerContainer = document.createElement('div');
+                innerContainer.className = "flex-1 flex items-center justify-start";
+
+                const input = document.createElement('input');
+                input.type = "text";
+                input.value = opt;
+                
+                const isLast = (i === options.length - 1);
+                input.placeholder = isLast ? "_" : "";
+                input.className = `w-full bg-transparent outline-none font-bold uppercase text-sm md:text-lg pl-6 pr-16 md:pr-32 py-4 md:py-6 placeholder-black text-black mix-blend-darken ${isLast ? 'blinking-placeholder' : ''}`;
+                
+                input.addEventListener('input', (e) => {
+                    const value = e.target.value;
+                    options[i] = value;
+                    const nowFilled = value.trim() !== '';
+                    stripe.style.backgroundColor = nowFilled ? getColor(i) : '#f3f4f6';
+                    stripe.style.boxShadow = nowFilled ? 'inset 0 2px 3px rgba(255,255,255,0.4), 0 -2px 6px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.1)' : 'none';
+                    updateCenterButton();
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const isCurrentlyLast = (i === options.length - 1);
+                        const hasContent = options[i].trim() !== '';
+
+                        if (isCurrentlyLast && hasContent) {
+                            lastAction = 'add';
+                            options.push("");
+                            renderStripes();
+                            requestAnimationFrame(() => {
+                                const newInputs = stripesContainer.querySelectorAll('input');
+                                if(newInputs[i+1]) newInputs[i+1].focus();
+                            });
+                        } else if (!isCurrentlyLast) {
+                            const newInputs = stripesContainer.querySelectorAll('input');
+                            if(newInputs[i+1]) newInputs[i+1].focus();
+                        }
+                    } 
+                    else if (e.key === 'Backspace' && e.target.value === '' && options.length > 1) {
+                        e.preventDefault();
+                        stripe.classList.remove('animate-stripe-in');
+                        stripe.classList.add('animate-stripe-out');
+                        
+                        setTimeout(() => {
+                            options.splice(i, 1);
+                            lastAction = 'remove';
+                            renderStripes();
+                            
+                            requestAnimationFrame(() => {
+                                const newInputs = stripesContainer.querySelectorAll('input');
+                                const focusTarget = Math.max(0, i - 1);
+                                if(newInputs[focusTarget]) {
+                                    newInputs[focusTarget].focus();
+                                    const valLen = newInputs[focusTarget].value.length;
+                                    newInputs[focusTarget].setSelectionRange(valLen, valLen);
+                                }
+                            });
+                            updateCenterButton();
+                        }, 250); 
+                    }
+                });
+
+                innerContainer.appendChild(input);
+                stripe.appendChild(innerContainer);
+                stripesContainer.appendChild(stripe);
+            });
+            
+            lastAction = null;
+        }
+
+        stripesContainer.addEventListener('focusout', (e) => {
+            setTimeout(() => {
+                if (!stripesContainer.contains(document.activeElement)) {
+                    const nonEmpty = options.filter(o => o.trim() !== "");
+                    options = [...nonEmpty, ""];
+                    renderStripes();
+                    updateCenterButton();
+                }
+            }, 100);
+        });
+
+        pickBtn.addEventListener('click', () => {
+            const validItems = getValidItems();
+            if (validItems.length < 2) return;
+            
+            stripesContainer.style.pointerEvents = 'none';
+            if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+                document.activeElement.blur();
+            }
+
+            // Set the horizontal slide variable (60% peek)
+            stripesContainer.style.setProperty('--stripe-slide', '60%');
+            stripesContainer.classList.remove('-space-y-4');
+            stripesContainer.classList.add('space-y-2');
+            
+            const finalItem = validItems[Math.floor(Math.random() * validItems.length)];
+            const finalColor = getColor(finalItem.index);
+            
+            lastSelectedStripeIndex = finalItem.index;
+            
+            const chosenStripe = document.getElementById(`stripe-${finalItem.index}`);
+            if (chosenStripe) {
+                chosenStripe.style.boxShadow = 'none';
+            }
+            
+            fullscreenText.textContent = finalItem.text;
+            fullscreen.style.backgroundColor = finalColor;
+            
+            fullscreen.classList.remove('hidden', 'animate-reveal-out');
+            fullscreen.classList.add('flex', 'animate-reveal-in');
+            
+            centerArea.style.opacity = '0';
+            centerArea.style.pointerEvents = 'none';
+        });
+
+        window.hideFullscreen = function() {
+            fullscreen.classList.remove('animate-reveal-in');
+            fullscreen.classList.add('animate-reveal-out');
+            
+            centerArea.style.opacity = '1';
+            centerArea.style.pointerEvents = 'auto';
+            stripesContainer.style.pointerEvents = 'auto';
+
+            if (lastSelectedStripeIndex !== null) {
+                const chosenStripe = document.getElementById(`stripe-${lastSelectedStripeIndex}`);
+                if (chosenStripe) {
+                    chosenStripe.style.boxShadow = 'inset 0 2px 3px rgba(255,255,255,0.4), 0 -2px 6px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.1)';
+                }
+                lastSelectedStripeIndex = null;
+            }
+
+            // Reset the horizontal slide variable
+            stripesContainer.style.setProperty('--stripe-slide', '0%');
+            stripesContainer.classList.remove('space-y-2');
+            stripesContainer.classList.add('-space-y-4');
+            
+            setTimeout(() => {
+                fullscreen.classList.add('hidden');
+                fullscreen.classList.remove('flex', 'animate-reveal-out');
+            }, 500);
+        };
+
+        renderStripes();
+        updateCenterButton();
+    </script>
+</body>
+</html>
