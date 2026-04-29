@@ -7,96 +7,240 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom scrollbar to maintain the minimalist aesthetic */
-        ::-webkit-scrollbar {
-            width: 8px;
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+
+        /* Smooth standard easing */
+        .ease-smooth { transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* --- Global Animations --- */
+        
+        /* Entrance animations */
+        @keyframes slideInUp {
+            0% { transform: translate(-50%, 100px); opacity: 0; }
+            100% { transform: translate(-50%, 0); opacity: 1; }
         }
-        ::-webkit-scrollbar-track {
-            background: transparent;
+        @keyframes slideInRight {
+            0% { transform: translate(100%, -50%); opacity: 0; }
+            100% { transform: translate(0, -50%); opacity: 1; }
         }
-        ::-webkit-scrollbar-thumb {
-            background: #e5e7eb;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #d1d5db;
+        @keyframes slideInDown {
+            0% { transform: translate(-50%, -100px); opacity: 0; }
+            100% { transform: translate(-50%, -50%); opacity: 1; }
         }
 
-        /* Custom bouncy easing */
-        .ease-bounce {
-            transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+        /* Exit animations */
+        @keyframes slideOutUp {
+            0% { transform: translate(-50%, -50%); opacity: 1; }
+            100% { transform: translate(-50%, -150%); opacity: 0; }
+        }
+        @keyframes slideOutDown {
+            0% { transform: translate(-50%, 0); opacity: 1; }
+            100% { transform: translate(-50%, 150%); opacity: 0; }
+        }
+        @keyframes slideOutRight {
+            0% { transform: translate(0, -50%); opacity: 1; }
+            100% { transform: translate(120%, -50%); opacity: 0; }
         }
 
-        /* Smooth reveal animation for the result - stationary text effect */
+        /* Result reveal */
         @keyframes revealInRight {
             0% { clip-path: inset(0 0 0 100%); opacity: 0; }
             100% { clip-path: inset(0 0 0 0); opacity: 1; }
         }
-        .animate-reveal-in {
-            animation: revealInRight 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        }
+        .animate-reveal-in { animation: revealInRight 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
-        /* Smooth slide out animation to the right */
         @keyframes revealOutRight {
             0% { clip-path: inset(0 0 0 0); opacity: 1; }
             100% { clip-path: inset(0 0 0 100%); opacity: 0; }
         }
-        .animate-reveal-out {
-            animation: revealOutRight 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        .animate-reveal-out { animation: revealOutRight 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+        /* Animation class assignments */
+        .entrance-stripes { animation: slideInUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @media (min-aspect-ratio: 1/1) {
+            .entrance-stripes { animation: slideInRight 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         }
 
-        /* Stripe entrance - Vertical slide only to avoid horizontal jitter */
-        @keyframes stripeIn {
-            0% { opacity: 0; transform: translateY(30px); }
-            100% { opacity: 1; transform: translateY(0); }
+        .entrance-center { animation: slideInDown 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+        .exit-stripes { animation: slideOutDown 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important; }
+        @media (min-aspect-ratio: 1/1) {
+            .exit-stripes { animation: slideOutRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important; }
         }
-        .animate-stripe-in {
-            animation: stripeIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        .exit-center { animation: slideOutUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important; }
+
+        /* --- Stripe Item Styling --- */
+        .stripe-item {
+            position: relative;
+            overflow: hidden !important;
+            transition: 
+                transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                background-color 0.3s, 
+                box-shadow 0.3s,
+                margin 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backface-visibility: hidden;
+            transform: translateZ(0);
         }
 
-        /* Stripe exit - Vertical slide down and fade */
-        @keyframes stripeOut {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(30px); }
-        }
-        .animate-stripe-out {
-            animation: stripeOut 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        }
-
-        /* Flashing underscore */
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-        .blinking-placeholder::placeholder {
-            animation: blink 1s step-end infinite;
-            color: #000;
-            opacity: 0.6;
+        .stripe-item::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background-color: #ffffff;
+            z-index: 0;
+            transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        /* Aspect ratio based layout logic */
-        :root {
-            /* We use a CSS variable for the horizontal slide so it doesn't break the Y positioning */
-            --stripe-slide: 0%;
+        .winner-active::before { width: 100%; }
+
+        /* --- Refined Industrial Glow --- */
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.3); }
+            50% { box-shadow: 0 0 35px 12px rgba(255, 255, 255, 0.7); }
+        }
+        .glow-active {
+            z-index: 100 !important;
+            animation: glowPulse 1.2s ease-in-out infinite;
+        }
+
+        /* --- Subwoofer Circular Button Styling --- */
+        
+        /* The button itself pulses very slightly every 4 seconds */
+        @keyframes verySubtlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        /* Shockwave rippling out every 4 seconds */
+        @keyframes shockwaveSpread {
+            0% { transform: scale(1); opacity: 0.5; border-width: 2px; }
+            40% { opacity: 0.2; }
+            100% { transform: scale(2.2); opacity: 0; border-width: 1px; }
+        }
+
+        #pick-btn {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #e4e4e7;
+            position: relative;
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .btn-animation-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: verySubtlePulse 4s ease-in-out infinite;
+        }
+
+        /* Shockwave element */
+        .btn-shockwave {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 1px solid #e4e4e7;
+            pointer-events: none;
+            z-index: 1;
+            animation: shockwaveSpread 4s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+        }
+
+        /* Concentric ring element on hover */
+        .pick-btn-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 4px solid black; 
+            opacity: 0;
+            transform: scale(0.8);
+            transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.4s ease;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Core circle transition */
+        .pick-btn-core {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: transparent;
+            transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+            z-index: 2;
+        }
+
+        /* Hover States */
+        #pick-btn:not(:disabled):hover {
+            background-color: #000000;
+        }
+        
+        #pick-btn:not(:disabled):hover .pick-btn-ring {
+            opacity: 1;
+            transform: scale(1.25);
+        }
+
+        #pick-btn:not(:disabled):hover .pick-btn-core {
+            transform: scale(0.55);
+            background-color: black;
+        }
+
+        /* Hide shockwave on hover to keep interaction clean */
+        #pick-btn:not(:disabled):hover ~ .btn-shockwave {
+            display: none;
+        }
+
+        /* UI elements */
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .blinking-placeholder::placeholder { animation: blink 1s step-end infinite; color: #000000; opacity: 0.3; }
+
+        /* Responsive Layout Logic */
+        :root { --stripe-slide: 0%; }
+
+        #center-area {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            transition: opacity 0.3s;
         }
 
         #stripes-container {
             width: 95vw;
+            position: fixed;
             bottom: 0;
-            top: auto;
-            transform: translateX(var(--stripe-slide));
-            z-index: 5; /* Lower z-index so it slides under the center button in vertical */
-            max-height: 75vh;
+            left: 50%;
+            transform: translateX(calc(-50% + var(--stripe-slide)));
+            z-index: 5;
+            max-height: 50vh;
+            overflow-y: auto;
+            overflow-x: visible;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), spacing 0.4s;
         }
 
         @media (min-aspect-ratio: 1/1) {
             #stripes-container {
-                width: 25vw;
-                min-width: 320px;
+                width: 40vw;
+                min-width: 400px;
                 top: 50%;
                 bottom: auto;
-                /* Combines vertical centering with our dynamic horizontal slide variable */
+                left: auto;
+                right: -24px;
                 transform: translateY(-50%) translateX(var(--stripe-slide));
-                z-index: 50; /* Higher z-index for landscape mode */
+                z-index: 50;
                 max-height: 90vh;
             }
         }
@@ -105,171 +249,169 @@
 <body class="bg-white text-black font-mono selection:bg-black selection:text-white overflow-hidden">
 
     <!-- Top Navigation Strip -->
-    <a href="/" class="fixed top-0 left-0 w-full h-[24px] bg-black text-white flex items-center justify-center text-sm tracking-widest z-[60] hover:text-gray-300 transition-colors">
+    <a id="back-link" href="/" class="fixed top-0 left-0 w-full h-[24px] bg-black text-white flex items-center justify-center text-sm tracking-widest z-[60] hover:bg-zinc-800 transition-colors">
         &lt;&lt;&lt;
     </a>
 
-    <div class="relative min-h-screen flex flex-col items-center justify-center">
+    <div class="relative min-h-screen">
         
         <!-- Central Action Area -->
-        <!-- Fixed top-16 and higher z-index (z-20) on mobile/narrow screens -->
-        <div id="center-area" class="fixed sm:relative top-16 sm:top-auto left-1/2 sm:left-auto -translate-x-1/2 sm:translate-x-0 z-20 flex items-center justify-center w-full max-w-xl p-4 transition-all duration-300 opacity-100">
-            <button id="pick-btn" class="group relative flex items-center justify-center w-24 h-24 md:w-32 md:h-32 border border-gray-300 rounded-full transition-all duration-200 opacity-30 cursor-not-allowed bg-gray-50" disabled>
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 transform transition-transform group-hover:-translate-x-1">
-                    <path d="m12 19-7-7 7-7"/>
-                    <path d="M19 12H5"/>
-                </svg>
-            </button>
+        <div id="center-area" class="opacity-0 entrance-center">
+            <div class="btn-animation-wrapper" id="btn-pulse-container">
+                <button id="pick-btn" class="opacity-30 cursor-not-allowed" disabled title="Pick Random Choice">
+                    <div class="pick-btn-core"></div>
+                    <div class="pick-btn-ring"></div>
+                </button>
+                <div class="btn-shockwave" id="btn-shockwave"></div>
+            </div>
         </div>
 
         <!-- Full Screen Result View -->
         <div id="fullscreen" class="absolute inset-0 z-40 hidden flex-col items-center justify-center cursor-pointer" onclick="hideFullscreen()">
-            <h2 id="fullscreen-text" class="text-[15vw] md:text-[12vw] max-w-[80vw] leading-[0.85] font-black uppercase text-black text-center break-words px-4 mix-blend-darken">
-            </h2>
+            <h2 id="fullscreen-text" class="text-[15vw] md:text-[12vw] max-w-[80vw] leading-[0.85] font-black uppercase text-black text-center break-words px-4 mix-blend-darken"></h2>
         </div>
         
-        <!-- The Editable Stripes on the Right -->
-        <div id="stripes-container" class="fixed right-[-24px] flex flex-col -space-y-4 overflow-y-auto overflow-x-visible py-8 pl-12 transition-all duration-500 ease-bounce">
-            <!-- Stripes generated via JS -->
-        </div>
-
+        <!-- The Editable Stripes -->
+        <div id="stripes-container" class="flex flex-col -space-y-4 py-8 px-4 sm:px-0 sm:pl-12 opacity-0 entrance-stripes"></div>
     </div>
 
     <script>
-        // State
-        let options = ["COFFEE", "TEA", "WATER", "ENERGY DRINK", ""];
+        // Start with only the empty variant field
+        let options = [""];
         let lastSelectedStripeIndex = null;
         let lastAction = null; 
         
-        const INDUSTRIAL_COLORS = [
-            '#FFEB3B', '#00E676', '#00E5FF', '#FF4081', '#FF9100', 
-            '#E040FB', '#1DE9B6', '#FF5252', '#B2FF59', '#64B5F6'
+        const MARATHON_COLORS = [
+            '#00FFC2', '#FF00FF', '#00E5FF', '#FFEB3B', '#FF4081', '#7C4DFF', '#FF5252', '#18FFFF', '#76FF03', '#F4F4F5'
         ];
 
         const stripesContainer = document.getElementById('stripes-container');
         const pickBtn = document.getElementById('pick-btn');
+        const btnPulseContainer = document.getElementById('btn-pulse-container');
+        const btnShockwave = document.getElementById('btn-shockwave');
         const fullscreen = document.getElementById('fullscreen');
         const fullscreenText = document.getElementById('fullscreen-text');
         const centerArea = document.getElementById('center-area');
+        const backLink = document.getElementById('back-link');
 
-        const getColor = (index) => INDUSTRIAL_COLORS[index % INDUSTRIAL_COLORS.length];
-        
-        const getValidItems = () => {
-            return options
-                .map((text, index) => ({ text: text.trim(), index }))
-                .filter(item => item.text !== '');
-        };
+        const getColor = (index) => MARATHON_COLORS[index % MARATHON_COLORS.length];
+        const isValidHex = (text) => /^#[0-9A-F]{3,6}$/i.test(text.trim());
+        const getDisplayColor = (text, index) => isValidHex(text) ? text.trim() : getColor(index);
+        const getValidItems = () => options.map((text, index) => ({ text: text.trim(), index })).filter(item => item.text !== '');
+
+        // Remove entrance classes after they finish
+        setTimeout(() => {
+            centerArea.classList.remove('entrance-center');
+            centerArea.style.opacity = "1";
+            stripesContainer.classList.remove('entrance-stripes');
+            stripesContainer.style.opacity = "1";
+        }, 800);
 
         function updateCenterButton() {
-            const validItemsCount = getValidItems().length;
-            if (validItemsCount < 2) {
-                pickBtn.disabled = true;
-                pickBtn.className = "group relative flex items-center justify-center w-24 h-24 md:w-32 md:h-32 border border-gray-300 rounded-full transition-all duration-200 opacity-30 cursor-not-allowed bg-gray-50";
+            const valid = getValidItems().length >= 2;
+            pickBtn.disabled = !valid;
+            
+            if (valid) {
+                pickBtn.classList.remove('opacity-30', 'cursor-not-allowed');
+                pickBtn.classList.add('cursor-pointer', 'opacity-100');
+                btnPulseContainer.style.animationPlayState = 'running';
+                btnShockwave.style.display = 'block';
             } else {
-                pickBtn.disabled = false;
-                pickBtn.className = "group relative flex items-center justify-center w-24 h-24 md:w-32 md:h-32 border border-gray-300 rounded-full transition-all duration-200 bg-transparent hover:bg-gray-50 hover:border-gray-400 cursor-pointer";
+                pickBtn.classList.add('opacity-30', 'cursor-not-allowed');
+                pickBtn.classList.remove('cursor-pointer', 'opacity-100');
+                btnPulseContainer.style.animationPlayState = 'paused';
+                btnShockwave.style.display = 'none';
             }
         }
 
         function renderStripes() {
             stripesContainer.innerHTML = '';
-            
             options.forEach((opt, i) => {
-                const zIndex = options.length - i;
                 const isFilled = opt.trim() !== '';
-                const bgColor = isFilled ? getColor(i) : '#f3f4f6';
-                const shadow = isFilled ? 'inset 0 2px 3px rgba(255,255,255,0.4), 0 -2px 6px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.1)' : 'none';
-
                 const stripe = document.createElement('div');
                 stripe.id = `stripe-${i}`;
-                
-                let classes = "flex items-stretch w-full transition-all duration-400 ease-bounce rounded-l-xl relative hover:-translate-x-[12px]";
-                
-                if (lastAction === 'add' && i === options.length - 1) {
-                    classes += " animate-stripe-in";
-                }
-                
-                stripe.className = classes;
-                stripe.style.zIndex = zIndex;
-                stripe.style.backgroundColor = bgColor;
-                stripe.style.boxShadow = shadow;
-
-                const innerContainer = document.createElement('div');
-                innerContainer.className = "flex-1 flex items-center justify-start";
+                stripe.className = `stripe-item flex items-stretch w-full rounded-2xl sm:rounded-r-none sm:rounded-l-2xl relative hover:-translate-x-[12px] ${lastAction === 'add' && i === options.length - 1 ? 'animate-stripe-in' : ''}`;
+                stripe.style.zIndex = options.length - i;
+                stripe.style.backgroundColor = isFilled ? getDisplayColor(opt, i) : '#f4f4f5';
+                stripe.style.boxShadow = isFilled ? 'inset 0 1px 2px rgba(255,255,255,0.4), 0 4px 10px rgba(0,0,0,0.06)' : 'none';
 
                 const input = document.createElement('input');
                 input.type = "text";
                 input.value = opt;
-                
-                const isLast = (i === options.length - 1);
-                input.placeholder = isLast ? "_" : "";
-                input.className = `w-full bg-transparent outline-none font-bold uppercase text-sm md:text-lg pl-6 pr-16 md:pr-32 py-4 md:py-6 placeholder-black text-black mix-blend-darken ${isLast ? 'blinking-placeholder' : ''}`;
+                input.placeholder = (i === options.length - 1) ? "_" : "";
+                input.className = `w-full bg-transparent outline-none font-bold uppercase text-sm md:text-xl pl-8 pr-8 sm:pr-32 py-5 md:py-7 placeholder-black/30 text-black mix-blend-darken relative z-10 ${i === options.length - 1 ? 'blinking-placeholder' : ''}`;
                 
                 input.addEventListener('input', (e) => {
-                    const value = e.target.value;
-                    options[i] = value;
-                    const nowFilled = value.trim() !== '';
-                    stripe.style.backgroundColor = nowFilled ? getColor(i) : '#f3f4f6';
-                    stripe.style.boxShadow = nowFilled ? 'inset 0 2px 3px rgba(255,255,255,0.4), 0 -2px 6px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.1)' : 'none';
+                    options[i] = e.target.value;
+                    const filled = options[i].trim() !== "";
+                    stripe.style.backgroundColor = filled ? getDisplayColor(options[i], i) : '#f4f4f5';
                     updateCenterButton();
+                });
+
+                input.addEventListener('paste', (e) => {
+                    const lines = (e.clipboardData || window.clipboardData).getData('text').split(/\r?\n/).filter(l => l.trim() !== "");
+                    if (lines.length > 1) {
+                        e.preventDefault();
+                        options.splice(i, 1, ...lines);
+                        const nonEmpty = options.filter(o => o.trim() !== "");
+                        options = [...nonEmpty, ""];
+                        renderStripes();
+                        updateCenterButton();
+                        requestAnimationFrame(() => {
+                            const inps = stripesContainer.querySelectorAll('input');
+                            const target = Math.min(i + lines.length - 1, inps.length - 1);
+                            if(inps[target]) inps[target].focus();
+                        });
+                    }
                 });
 
                 input.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
-                        const isCurrentlyLast = (i === options.length - 1);
+                        const isLastSlot = (i === options.length - 1);
                         const hasContent = options[i].trim() !== '';
 
-                        if (isCurrentlyLast && hasContent) {
+                        if (isLastSlot && hasContent) {
+                            // If user is at the very last slot and it has text, add a new empty slot
                             lastAction = 'add';
                             options.push("");
                             renderStripes();
                             requestAnimationFrame(() => {
-                                const newInputs = stripesContainer.querySelectorAll('input');
-                                if(newInputs[i+1]) newInputs[i+1].focus();
+                                const inps = stripesContainer.querySelectorAll('input');
+                                inps[i+1]?.focus();
                             });
-                        } else if (!isCurrentlyLast) {
-                            const newInputs = stripesContainer.querySelectorAll('input');
-                            if(newInputs[i+1]) newInputs[i+1].focus();
+                        } else if (!isLastSlot) {
+                            // Just move focus to the next existing slot
+                            stripesContainer.querySelectorAll('input')[i+1]?.focus();
                         }
-                    } 
-                    else if (e.key === 'Backspace' && e.target.value === '' && options.length > 1) {
+                    } else if (e.key === 'Backspace' && !e.target.value && options.length > 1) {
                         e.preventDefault();
-                        stripe.classList.remove('animate-stripe-in');
                         stripe.classList.add('animate-stripe-out');
-                        
                         setTimeout(() => {
                             options.splice(i, 1);
                             lastAction = 'remove';
                             renderStripes();
-                            
-                            requestAnimationFrame(() => {
-                                const newInputs = stripesContainer.querySelectorAll('input');
-                                const focusTarget = Math.max(0, i - 1);
-                                if(newInputs[focusTarget]) {
-                                    newInputs[focusTarget].focus();
-                                    const valLen = newInputs[focusTarget].value.length;
-                                    newInputs[focusTarget].setSelectionRange(valLen, valLen);
-                                }
-                            });
+                            const inps = stripesContainer.querySelectorAll('input');
+                            const target = Math.max(0, i - 1);
+                            inps[target]?.focus();
                             updateCenterButton();
-                        }, 250); 
+                        }, 200);
                     }
                 });
 
-                innerContainer.appendChild(input);
-                stripe.appendChild(innerContainer);
+                const inner = document.createElement('div');
+                inner.className = "flex-1 flex items-center justify-start relative z-10";
+                inner.appendChild(input);
+                stripe.appendChild(inner);
                 stripesContainer.appendChild(stripe);
             });
-            
             lastAction = null;
         }
 
-        stripesContainer.addEventListener('focusout', (e) => {
+        stripesContainer.addEventListener('focusout', () => {
             setTimeout(() => {
                 if (!stripesContainer.contains(document.activeElement)) {
-                    const nonEmpty = options.filter(o => o.trim() !== "");
-                    options = [...nonEmpty, ""];
+                    options = [...options.filter(o => o.trim() !== ""), ""];
                     renderStripes();
                     updateCenterButton();
                 }
@@ -277,65 +419,58 @@
         });
 
         pickBtn.addEventListener('click', () => {
-            const validItems = getValidItems();
-            if (validItems.length < 2) return;
-            
+            const valid = getValidItems();
+            if (valid.length < 2) return;
+            document.activeElement?.blur();
             stripesContainer.style.pointerEvents = 'none';
-            if (document.activeElement && document.activeElement.tagName === 'INPUT') {
-                document.activeElement.blur();
-            }
 
-            // Set the horizontal slide variable (60% peek)
             stripesContainer.style.setProperty('--stripe-slide', '60%');
-            stripesContainer.classList.remove('-space-y-4');
-            stripesContainer.classList.add('space-y-2');
+            stripesContainer.classList.replace('-space-y-4', 'space-y-4');
             
-            const finalItem = validItems[Math.floor(Math.random() * validItems.length)];
-            const finalColor = getColor(finalItem.index);
-            
-            lastSelectedStripeIndex = finalItem.index;
-            
-            const chosenStripe = document.getElementById(`stripe-${finalItem.index}`);
-            if (chosenStripe) {
-                chosenStripe.style.boxShadow = 'none';
+            const winner = valid[Math.floor(Math.random() * valid.length)];
+            const winStripe = document.getElementById(`stripe-${winner.index}`);
+            if (winStripe) {
+                winStripe.classList.add('glow-active', 'winner-active');
             }
             
-            fullscreenText.textContent = finalItem.text;
-            fullscreen.style.backgroundColor = finalColor;
-            
+            lastSelectedStripeIndex = winner.index;
+            fullscreenText.textContent = winner.text;
+            fullscreen.style.backgroundColor = getDisplayColor(winner.text, winner.index);
             fullscreen.classList.remove('hidden', 'animate-reveal-out');
             fullscreen.classList.add('flex', 'animate-reveal-in');
-            
             centerArea.style.opacity = '0';
             centerArea.style.pointerEvents = 'none';
         });
 
         window.hideFullscreen = function() {
-            fullscreen.classList.remove('animate-reveal-in');
-            fullscreen.classList.add('animate-reveal-out');
-            
+            fullscreen.classList.replace('animate-reveal-in', 'animate-reveal-out');
             centerArea.style.opacity = '1';
             centerArea.style.pointerEvents = 'auto';
             stripesContainer.style.pointerEvents = 'auto';
-
-            if (lastSelectedStripeIndex !== null) {
-                const chosenStripe = document.getElementById(`stripe-${lastSelectedStripeIndex}`);
-                if (chosenStripe) {
-                    chosenStripe.style.boxShadow = 'inset 0 2px 3px rgba(255,255,255,0.4), 0 -2px 6px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.1)';
-                }
-                lastSelectedStripeIndex = null;
+            
+            const winStripe = document.querySelector('.winner-active');
+            if (winStripe) {
+                winStripe.classList.remove('glow-active', 'winner-active');
             }
+            lastSelectedStripeIndex = null;
 
-            // Reset the horizontal slide variable
             stripesContainer.style.setProperty('--stripe-slide', '0%');
-            stripesContainer.classList.remove('space-y-2');
-            stripesContainer.classList.add('-space-y-4');
+            stripesContainer.classList.replace('space-y-4', '-space-y-4');
             
             setTimeout(() => {
-                fullscreen.classList.add('hidden');
-                fullscreen.classList.remove('flex', 'animate-reveal-out');
-            }, 500);
+                fullscreen.classList.replace('flex', 'hidden');
+            }, 400);
         };
+
+        backLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetUrl = e.currentTarget.href;
+            centerArea.classList.add('exit-center');
+            stripesContainer.classList.add('exit-stripes');
+            setTimeout(() => {
+                window.location.href = targetUrl;
+            }, 500);
+        });
 
         renderStripes();
         updateCenterButton();
