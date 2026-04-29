@@ -36,7 +36,13 @@
             padding: 0 15px;
             z-index: 300;
             text-decoration: none;
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
+            /* Entrance state */
+            transform: translateY(-24px);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
+        }
+
+        body.is-loaded .return-bar {
+            transform: translateY(0);
         }
 
         .return-bar:hover {
@@ -60,7 +66,15 @@
             gap: 4px;
             pointer-events: none;
             z-index: 200;
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            /* Entrance state */
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body.is-loaded #console-log {
+            opacity: 1;
+            transform: translateX(0);
         }
 
         .console-item {
@@ -92,7 +106,15 @@
             display: flex;
             gap: 1rem;
             margin-top: -30vh;
-            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+            /* Entrance state */
+            opacity: 0;
+            transform: translateY(30px);
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease;
+        }
+
+        body.is-loaded .controls-wrapper {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         /* Keycard Container */
@@ -356,7 +378,7 @@
         }
 
         body.shutting-down .return-bar {
-            transform: translateY(-24px);
+            transform: translateY(-24px) !important;
         }
 
         body.shutting-down #console-log {
@@ -590,7 +612,7 @@
         function createCard(data, i) {
             const contrast = getContrastYIQ(data.hex);
             const card = document.createElement('div');
-            card.className = 'keycard is-active';
+            card.className = 'keycard';
             if (data.locked) card.classList.add('is-locked');
             
             let startY = 0;
@@ -674,12 +696,20 @@
         function initializePalette() {
             paletteContainer.innerHTML = '';
             cardData = Array.from({ length: 6 }, () => ({ hex: generateHex(), locked: false }));
+            
             cardData.forEach((data, i) => {
                 const card = createCard(data, i);
                 paletteContainer.appendChild(card);
-                setTimeout(() => card.classList.add('is-active'), i * 50);
+                // Staggered card entrance: starts shortly after header/buttons
+                setTimeout(() => card.classList.add('is-active'), i * 60 + 250);
             });
-            updateConsole('Systems Online');
+
+            // Trigger global UI entrance
+            requestAnimationFrame(() => {
+                document.body.classList.add('is-loaded');
+            });
+
+            setTimeout(() => updateConsole('Systems Online'), 800);
         }
 
         window.addEventListener('keydown', (e) => {

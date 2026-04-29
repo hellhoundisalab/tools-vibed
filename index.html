@@ -3,10 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tools Vibed</title>
+    <title>Project Index // Workshop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font imports for that industrial/editorial feel */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Animations */
+        @keyframes slideRight {
+            0% { transform: translateX(-30px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .square-row > div {
+            opacity: 0; /* Hidden initially */
+            animation: slideRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Staggered delays for the 11 squares */
+        .square-row > div:nth-child(1) { animation-delay: 0.00s; }
+        .square-row > div:nth-child(2) { animation-delay: 0.05s; }
+        .square-row > div:nth-child(3) { animation-delay: 0.10s; }
+        .square-row > div:nth-child(4) { animation-delay: 0.15s; }
+        .square-row > div:nth-child(5) { animation-delay: 0.20s; }
+        .square-row > div:nth-child(6) { animation-delay: 0.25s; }
+        .square-row > div:nth-child(7) { animation-delay: 0.30s; }
+        .square-row > div:nth-child(8) { animation-delay: 0.35s; }
+        .square-row > div:nth-child(9) { animation-delay: 0.40s; }
+        .square-row > div:nth-child(10) { animation-delay: 0.45s; }
+        .square-row > div:nth-child(11) { animation-delay: 0.50s; }
+
+        .gallery-anim {
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out 0.6s forwards; /* Starts fading in after squares */
+        }
+    </style>
 </head>
-<body>
-    <h1>Welcome to Tools Vibed</h1>
-    <button onclick="window.location.href='color-palete.html'">Go to Color Palette</button>
+<body class="bg-white text-zinc-900 min-h-screen flex flex-col selection:bg-orange-500 selection:text-white">
+
+    <!-- Main Content -->
+    <main class="flex-grow p-6 max-w-7xl mx-auto w-full flex flex-col pt-12 md:pt-24">
+        
+        <!-- Geometric Header Pattern -->
+        <div class="w-full flex flex-col gap-2 mb-16">
+            <!-- Top Row (Aligned Top) -->
+            <div class="flex justify-between items-start w-full square-row">
+                <div class="bg-black w-12 h-12 sm:w-24 sm:h-24"></div>
+                <div class="bg-black w-11 h-11 sm:w-20 sm:h-20"></div>
+                <div class="bg-black w-10 h-10 sm:w-16 sm:h-16"></div>
+                <div class="bg-black w-9 h-9 sm:w-14 sm:h-14"></div>
+                <div class="bg-black w-8 h-8 sm:w-12 sm:h-12"></div>
+                <div class="bg-black w-7 h-7 sm:w-10 sm:h-10"></div>
+                <div class="bg-black w-6 h-6 sm:w-8 sm:h-8"></div>
+                <div class="bg-black w-5 h-5 sm:w-6 sm:h-6"></div>
+                <div class="bg-black w-4 h-4 sm:w-5 sm:h-5"></div>
+                <div class="bg-black w-3 h-3 sm:w-4 sm:h-4"></div>
+                <div class="bg-black w-2 h-2 sm:w-3 sm:h-3"></div>
+            </div>
+            <!-- Bottom Row (Aligned Bottom) -->
+            <div class="flex justify-between items-end w-full square-row">
+                <div class="bg-black w-12 h-12 sm:w-24 sm:h-24"></div>
+                <div class="bg-black w-11 h-11 sm:w-20 sm:h-20"></div>
+                <div class="bg-black w-10 h-10 sm:w-16 sm:h-16"></div>
+                <div class="bg-black w-9 h-9 sm:w-14 sm:h-14"></div>
+                <div class="bg-black w-8 h-8 sm:w-12 sm:h-12"></div>
+                <div class="bg-black w-7 h-7 sm:w-10 sm:h-10"></div>
+                <div class="bg-black w-6 h-6 sm:w-8 sm:h-8"></div>
+                <div class="bg-black w-5 h-5 sm:w-6 sm:h-6"></div>
+                <div class="bg-black w-4 h-4 sm:w-5 sm:h-5"></div>
+                <div class="bg-black w-3 h-3 sm:w-4 sm:h-4"></div>
+                <div class="bg-black w-2 h-2 sm:w-3 sm:h-3"></div>
+            </div>
+        </div>
+
+        <!-- Project Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr gallery-anim">
+            
+            <!-- FLASHCARD 01: Color Palette -->
+            <a href="color-palete.html" class="group block aspect-square bg-white border border-zinc-300 relative overflow-hidden transition-all duration-300 hover:border-orange-600 hover:shadow-[4px_4px_0px_0px_rgba(234,88,12,1)] flex flex-col justify-between p-6">
+                <!-- Top Info -->
+                <div class="flex justify-end items-start">
+                    <!-- Arrow Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" class="text-zinc-300 group-hover:text-orange-600 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1">
+                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                        <polyline points="7 7 17 7 17 17"></polyline>
+                    </svg>
+                </div>
+
+                <!-- Center Content / Abstract Visual -->
+                <div class="flex-grow flex items-center justify-center py-8">
+                    <!-- Abstract representation of a color palette -->
+                    <div class="flex gap-0.5 shadow-sm border border-zinc-100 p-1 bg-zinc-50 w-full max-w-[200px] h-12 transform group-hover:scale-105 transition-transform duration-300">
+                        <div class="flex-1 bg-zinc-900 h-full"></div>
+                        <div class="flex-1 bg-zinc-500 h-full"></div>
+                        <div class="flex-1 bg-zinc-300 h-full"></div>
+                        <div class="flex-1 bg-orange-600 h-full"></div>
+                    </div>
+                </div>
+
+                <!-- Bottom Info -->
+                <div class="border-t border-zinc-100 pt-4 mt-auto">
+                    <h3 class="text-lg font-semibold tracking-tight text-zinc-900 group-hover:text-orange-600 transition-colors">Color Palette</h3>
+                </div>
+            </a>
+
+            <!-- EMPTY SLOT (For future projects) -->
+            <div class="aspect-square bg-zinc-50/50 border border-dashed border-zinc-300 flex flex-col items-center justify-center p-6 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" class="text-zinc-300">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </div>
+
+            <!-- EMPTY SLOT -->
+            <div class="aspect-square bg-zinc-50/50 border border-dashed border-zinc-300 flex flex-col items-center justify-center p-6 text-center hidden sm:flex">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" class="text-zinc-300">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('a.group');
+            
+            cards.forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const href = card.getAttribute('href');
+                    if (!href || href === '#') return;
+                    
+                    e.preventDefault();
+                    
+                    // Capture starting position
+                    const rect = card.getBoundingClientRect();
+                    const clone = card.cloneNode(true);
+                    
+                    clone.classList.add('expand-clone');
+                    
+                    // Apply exact starting coordinates and set to fixed
+                    clone.style.position = 'fixed';
+                    clone.style.top = rect.top + 'px';
+                    clone.style.left = rect.left + 'px';
+                    clone.style.width = rect.width + 'px';
+                    clone.style.height = rect.height + 'px';
+                    clone.style.margin = '0';
+                    clone.style.zIndex = '9999';
+                    clone.style.backgroundColor = '#ffffff';
+                    clone.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+                    clone.style.borderColor = 'transparent';
+                    clone.style.boxShadow = 'none'; // Overwrite hover shadow
+                    
+                    document.body.appendChild(clone);
+                    
+                    // Hide original to keep grid structure intact but invisible
+                    card.style.opacity = '0';
+                    
+                    // Force DOM reflow so transition works from starting coords
+                    clone.offsetHeight;
+                    
+                    // Fade out inner text and icon
+                    Array.from(clone.children).forEach(child => {
+                        child.style.transition = 'opacity 0.3s ease';
+                        child.style.opacity = '0';
+                    });
+                    
+                    // Expand clone to fill viewport
+                    clone.style.top = '0px';
+                    clone.style.left = '0px';
+                    clone.style.width = '100vw';
+                    clone.style.height = '100vh';
+                    
+                    // Navigate after the transition completes
+                    setTimeout(() => {
+                        window.location.href = href;
+                    }, 600);
+                });
+            });
+
+            // Reset layout if user navigates back to this page (bfcache handling)
+            window.addEventListener('pageshow', (event) => {
+                if (event.persisted) {
+                    document.querySelectorAll('a.group').forEach(c => c.style.opacity = '1');
+                    document.querySelectorAll('.expand-clone').forEach(c => c.remove());
+                }
+            });
+        });
+    </script>
 </body>
 </html>
